@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-06 (revised 2026-11-16)
 **Author:** Sarthak (with Claude Code)
-**Status:** Approved 2026-11-16 — Phases 1–4 done
+**Status:** Approved 2026-11-16 — Phases 1–5 done
 **Location:** `~/Desktop/experiments/storage-analysis/`
 
 ---
@@ -172,8 +172,11 @@ struct ScanResult {       // produced per scan
   (or greyed under "Nothing found") rather than shown as 0 B.
 - Free space: `df -k /System/Volumes/Data` (the real data volume — **not** `/`,
   which reports the sealed read-only system snapshot and misleads).
-- Largest files: `find <roots> -type f -size +100M` across the heaviest roots,
-  top N by size, shown in a secondary section.
+- Largest files: walk the targets' own folders with `FileManager` (nested
+  folders walked once), keep regular files ≥ 100 MB by allocated size, top 10.
+  Each file is attributed to the one target whose `Measure` contains it
+  (unique, because targets never double-count). Walked in-process rather than
+  with `find` so odd filenames can't break parsing.
 - All of this runs on a background `Task`; UI shows per-target progress and
   updates when done.
 
@@ -229,7 +232,10 @@ exists, the safe tool-level alternative, e.g. `docker system prune`).
    empty categories, and a ⚠︎ marker on rows whose size may be low because
    part of the tree was unreadable. One scan runs at launch; after that only
    Rescan triggers one. (Done 2026-11-16.)
-5. **Largest-files section** + remaining error states.
+5. ✅ **Largest-files section** — top 10 files ≥ 100 MB, searched only inside
+   the targets' folders (no whole-disk crawl), each labelled with the row
+   that counts it; runs alongside the folder scan (≈4 s total). Error
+   states: unreadable items are counted and shown. (Done 2026-11-16.)
 6. **Polish** — formatting, footer safety note review, app icon/glyph.
 
 Tests (in `Sources/CoreChecks`, run with `swift run CoreChecks`): unit-test the `du`/`df` output parsing, each `Measure` case against a

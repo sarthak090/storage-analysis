@@ -14,6 +14,7 @@ struct PopoverView: View {
                     ForEach(SafetyCategory.allCases, id: \.self) { category in
                         CategorySection(category: category, model: model)
                     }
+                    LargestFilesSection(model: model)
                 }
                 .padding(.trailing, 4)
             }
@@ -120,6 +121,84 @@ private struct CategorySection: View {
                         .monospacedDigit()
                 }
             }
+        }
+    }
+}
+
+// MARK: - Largest files
+
+private struct LargestFilesSection: View {
+    let model: ScanModel
+    @State private var expanded = true
+
+    var body: some View {
+        DisclosureGroup(isExpanded: $expanded) {
+            VStack(alignment: .leading, spacing: 10) {
+                if let report = model.largeFiles {
+                    if report.files.isEmpty {
+                        Text("No files over 100 MB in the scanned folders")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    } else {
+                        ForEach(report.files) { file in
+                            LargeFileRow(file: file)
+                        }
+                    }
+                    if report.unreadableCount > 0 {
+                        Text("\(report.unreadableCount) item(s) couldn't be read and were skipped")
+                            .font(.caption2)
+                            .foregroundStyle(.secondary)
+                    }
+                } else {
+                    Text("Searching…")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            .padding(.top, 6)
+            .frame(maxWidth: .infinity, alignment: .leading)
+        } label: {
+            Text("📄 Largest files")
+                .font(.subheadline.weight(.semibold))
+        }
+    }
+}
+
+private struct LargeFileRow: View {
+    let file: LargeFile
+
+    var body: some View {
+        HStack(alignment: .top, spacing: 8) {
+            Text(Format.compact(file.bytes))
+                .font(.callout.weight(.medium))
+                .monospacedDigit()
+                .frame(width: 62, alignment: .trailing)
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text(file.name)
+                    .font(.callout)
+                    .lineLimit(1)
+                    .truncationMode(.middle)
+                Text(file.displayFolder)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+                    .truncationMode(.head)
+                if let owner = file.owner {
+                    Text("\(owner.category.symbol) Part of \(owner.name)")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+            Spacer(minLength: 4)
+
+            Button {
+                NSWorkspace.shared.activateFileViewerSelecting([URL(fileURLWithPath: file.path)])
+            } label: {
+                Image(systemName: "magnifyingglass").frame(width: 16)
+            }
+            .buttonStyle(.borderless)
+            .help("Reveal in Finder\n\(file.path)")
         }
     }
 }

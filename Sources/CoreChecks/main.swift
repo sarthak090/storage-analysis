@@ -197,5 +197,49 @@ checkEqual(Scanner.revealPath(for: .sum([.directory("\(fixture)/nope"), .directo
 checkEqual(Scanner.revealPath(for: .glob("\(fixture)/caches/*.ShipIt")), "\(fixture)/caches/one.ShipIt", "reveal first glob match")
 checkEqual(Scanner.revealPath(for: .excluding(.directory("\(fixture)/dir"), minus: [])), "\(fixture)/dir", "reveal excluding base")
 
+// MARK: - Measure.contains
+
+check(Measure.directory("\(fixture)/dir").contains(path: "\(fixture)/dir/sub/c.bin"), "directory contains nested file")
+check(!Measure.directory("\(fixture)/dir").contains(path: "\(fixture)/dirx/a"), "directory doesn't contain sibling prefix")
+check(Measure.files(root: "\(fixture)/hf", pattern: "*.incomplete").contains(path: "\(fixture)/hf/deep/z.incomplete"), "files contains matching name")
+check(!Measure.files(root: "\(fixture)/hf", pattern: "*.incomplete").contains(path: "\(fixture)/hf/y.bin"), "files skips non-matching name")
+check(Measure.glob("\(fixture)/caches/*.ShipIt").contains(path: "\(fixture)/caches/one.ShipIt/f"), "glob contains file under a match")
+check(!Measure.glob("\(fixture)/caches/*.ShipIt").contains(path: "\(fixture)/caches/other/f"), "glob skips non-match")
+let hfModels = Measure.excluding(.directory("\(fixture)/hf"), minus: [.files(root: "\(fixture)/hf", pattern: "*.incomplete")])
+check(hfModels.contains(path: "\(fixture)/hf/y.bin"), "excluding keeps the rest")
+check(!hfModels.contains(path: "\(fixture)/hf/x.incomplete"), "excluding drops the excluded part")
+
+// Every real file belongs to exactly one catalog target (follows from no double counting).
+for probe in ["~/Library/Application Support/Google/Chrome/OptGuideOnDeviceModel/x",
+              "~/Library/Application Support/Google/Chrome/Default/History",
+              "~/.cache/huggingface/hub/a.incomplete",
+              "~/.cache/huggingface/hub/model.safetensors",
+              "~/Library/Caches/com.x.ShipIt/update.zip"] {
+    let path = (probe as NSString).expandingTildeInPath
+    let owners = TargetCatalog.all.filter { $0.measure.contains(path: path) }.map(\.id)
+    checkEqual(owners.count, 1, "exactly one owner for \(probe): \(owners)")
+}
+
+// MARK: - Largest files
+
+makeFile("large/a/big.bin", kilobytes: 400)
+makeFile("large/a/mid.bin", kilobytes: 200)
+makeFile("large/a/small.bin", kilobytes: 20)
+makeFile("large/b/huge.bin", kilobytes: 800)
+makeFile("large/b/nested/also-big.bin", kilobytes: 300)
+makeFile("large/outside.bin", kilobytes: 900) // not inside any target
+let largeTargets = [
+    Target(id: "a", name: "A", measure: .directory("\(fixture)/large/a"), purpose: "", category: .safe, cleanup: .tool("x")),
+    Target(id: "b", name: "B", measure: .excluding(.directory("\(fixture)/large/b"), minus: [.directory("\(fixture)/large/b/nested")]), purpose: "", category: .risky, cleanup: nil),
+    Target(id: "n", name: "N", measure: .directory("\(fixture)/large/b/nested"), purpose: "", category: .rebuild, cleanup: .tool("x")),
+]
+checkEqual(Scanner.searchRoots(for: largeTargets), ["\(fixture)/large/a", "\(fixture)/large/b"], "search roots drop nested folders")
+let report = await scanner.largestFiles(in: largeTargets, minimumBytes: 150 * KB, limit: 3)
+checkEqual(report.files.map(\.name), ["huge.bin", "big.bin", "also-big.bin"], "largest files: sorted, limited, threshold, only inside targets")
+checkEqual(report.files.map { $0.owner?.id ?? "-" }, ["b", "a", "n"], "largest files: owner respects exclusions")
+checkEqual(report.files.first?.bytes, 800 * KB, "largest files: allocated size")
+checkEqual(report.unreadableCount, 0, "largest files: nothing unreadable")
+checkEqual(await scanner.largestFiles(in: largeTargets, minimumBytes: 10_000 * KB).files, [], "largest files: none above threshold")
+
 print("\(passed) passed, \(failures) failed")
 if failures > 0 { exit(1) }

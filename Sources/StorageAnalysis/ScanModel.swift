@@ -12,6 +12,7 @@ final class ScanModel {
     private(set) var progress: (done: Int, total: Int) = (0, 0)
     private(set) var lastScanned: Date?
     private(set) var diskSpaceError: String?
+    private(set) var largeFiles: LargeFileReport?
 
     private let scanner = Scanner()
     private let targets: [Target]
@@ -33,9 +34,12 @@ final class ScanModel {
             diskSpaceError = "\(error)"
         }
 
+        // The large-file search walks the same folders; run it alongside.
+        async let large = scanner.largestFiles(in: targets)
         results = await scanner.scan(targets) { done, total in
             Task { @MainActor [weak self] in self?.progress = (done, total) }
         }
+        largeFiles = await large
         lastScanned = Date()
     }
 

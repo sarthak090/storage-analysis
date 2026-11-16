@@ -28,3 +28,13 @@ for category in SafetyCategory.allCases {
     print()
 }
 print(String(format: "Scanned %d targets in %.1fs", results.count, Date().timeIntervalSince(start)))
+
+let largeStart = Date()
+let large = await scanner.largestFiles(in: TargetCatalog.all)
+print("\n📄 Largest files (≥ 100 MB)")
+for file in large.files {
+    let owner = file.owner.map { "\($0.category.symbol) \($0.name)" } ?? "?"
+    print("  \(size(file.bytes).padding(toLength: 12, withPad: " ", startingAt: 0)) \(file.name)  — \(owner)")
+}
+if large.unreadableCount > 0 { print("  (\(large.unreadableCount) unreadable items skipped)") }
+print(String(format: "Found in %.1fs", Date().timeIntervalSince(largeStart)))
