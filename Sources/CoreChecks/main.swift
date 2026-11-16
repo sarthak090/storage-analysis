@@ -244,5 +244,21 @@ checkEqual(report.files.first?.bytes, 800 * KB, "largest files: allocated size")
 checkEqual(report.unreadableCount, 0, "largest files: nothing unreadable")
 checkEqual(await scanner.largestFiles(in: largeTargets, minimumBytes: 10_000 * KB).files, [], "largest files: none above threshold")
 
+// MARK: - Storage breakdown
+
+func result(_ category: SafetyCategory, _ bytes: Int64, exists: Bool = true) -> ScanResult {
+    ScanResult(target: t("x\(bytes)", .directory("~/x\(bytes)"), category, category == .risky ? nil : .tool("t")),
+               bytes: bytes, exists: exists, errors: [])
+}
+let space100 = DiskSpace(totalBytes: 100, usedBytes: 0, availableBytes: 10)
+let breakdown = StorageBreakdown(space: space100, results: [result(.safe, 20), result(.safe, 5), result(.rebuild, 15), result(.risky, 30), result(.risky, 99, exists: false)])
+checkEqual(breakdown.segments.map(\.kind), [.safe, .rebuild, .risky, .other, .free], "breakdown segment order")
+checkEqual(breakdown.segments.map(\.bytes), [25, 15, 30, 20, 10], "breakdown sums categories, ignores missing rows")
+checkEqual(breakdown.segments.reduce(0) { $0 + $1.bytes }, 100, "breakdown adds up to the disk")
+checkEqual(breakdown.fraction(.safe), 0.25, "breakdown fraction")
+let overfull = StorageBreakdown(space: space100, results: [result(.safe, 60), result(.rebuild, 60)])
+checkEqual(overfull.segments.map(\.bytes), [60, 30, 0, 0, 10], "breakdown clamps to used space")
+checkEqual(StorageBreakdown(space: space100, results: []).segments.map(\.bytes), [0, 0, 0, 90, 10], "breakdown with no results")
+
 print("\(passed) passed, \(failures) failed")
 if failures > 0 { exit(1) }

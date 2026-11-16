@@ -198,6 +198,13 @@ exists, the safe tool-level alternative, e.g. `docker system prune`).
   three collapsible category sections, then "Largest files", then a Rescan button.
 - Each safe/rebuild row: size · name · one-line purpose · **[Copy cleanup]**
   (writes the command to the clipboard via `NSPasteboard`) · **[Reveal]**.
+- **Redesign (2026-11-16, Mobbin references: SoundCloud / Google One /
+  WhatsApp storage screens, Telegram cache screen):** big "free" headline;
+  segmented bar splitting the whole disk into safe / rebuilds / keep /
+  everything else / free with a legend; categories as rounded cards with an
+  outside caps header + total and a footnote; rows get a category-tinted
+  SF Symbol tile; Safe card ends with "Copy all N commands · size" (copies
+  only, one per line). Bar math is `StorageBreakdown` in Core (checked).
 - No delete button anywhere. A footer line states: "This app never deletes
   files — commands are copied for you to review and run."
 

@@ -54,6 +54,11 @@ final class ScanModel {
         rows(in: category).reduce(0) { $0 + $1.bytes }
     }
 
+    /// Disk split for the segmented bar; nil until free space is known.
+    var breakdown: StorageBreakdown? {
+        diskSpace.map { StorageBreakdown(space: $0, results: results) }
+    }
+
     var menuBarLabel: (text: String, symbol: String) {
         diskSpace.map(Format.menuBarLabel) ?? ("…", "internaldrive")
     }
