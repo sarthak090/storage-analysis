@@ -165,7 +165,7 @@ public enum TargetCatalog {
             purpose: "Live Docker/Colima container and VM data",
             category: .risky,
             cleanup: nil,
-            note: "To shrink it safely, run `docker system prune` with Colima running."
+            note: "To shrink it safely, run “docker system prune” with Colima running."
         ),
         Target(
             id: "claude-sessions",

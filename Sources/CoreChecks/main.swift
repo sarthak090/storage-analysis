@@ -176,5 +176,26 @@ check(violations([t("outer", .excluding(.directory("~/x"), minus: [.directory("~
 check(violations([t("a", .directory("~/xy"), .safe, .tool("t")), t("b", .directory("~/x"), .safe, .tool("t"))]).isEmpty,
       "sibling prefix (~/x vs ~/xy) is not an overlap")
 
+// MARK: - Format
+
+checkEqual(Format.compact(9_260_000_000), "9.3 GB", "compact GB one decimal")
+checkEqual(Format.compact(245_110_000_000), "245 GB", "compact >= 100 drops decimal")
+checkEqual(Format.compact(850_000_000), "850 MB", "compact MB")
+checkEqual(Format.compact(999), "999 B", "compact bytes")
+checkEqual(Format.compact(-5), "0 B", "compact clamps negatives")
+let nearlyFull = DiskSpace(totalBytes: 100_000_000_000, usedBytes: 80_000_000_000, availableBytes: 5_000_000_000)
+let roomy = DiskSpace(totalBytes: 100_000_000_000, usedBytes: 50_000_000_000, availableBytes: 50_000_000_000)
+checkEqual(Format.menuBarLabel(nearlyFull), "⚠︎ 5.0 GB", "label warns at >= 90% used")
+checkEqual(Format.menuBarLabel(roomy), "50.0 GB", "label plain below 90%")
+checkEqual(Format.spaceSummary(nearlyFull), "5.0 GB free of 100 GB · 95% used", "space summary")
+
+// MARK: - Reveal path
+
+checkEqual(Scanner.revealPath(for: .directory("\(fixture)/dir")), "\(fixture)/dir", "reveal directory")
+checkEqual(Scanner.revealPath(for: .directory("\(fixture)/nope")), nil, "reveal missing")
+checkEqual(Scanner.revealPath(for: .sum([.directory("\(fixture)/nope"), .directory("\(fixture)/hf")])), "\(fixture)/hf", "reveal first existing in sum")
+checkEqual(Scanner.revealPath(for: .glob("\(fixture)/caches/*.ShipIt")), "\(fixture)/caches/one.ShipIt", "reveal first glob match")
+checkEqual(Scanner.revealPath(for: .excluding(.directory("\(fixture)/dir"), minus: [])), "\(fixture)/dir", "reveal excluding base")
+
 print("\(passed) passed, \(failures) failed")
 if failures > 0 { exit(1) }

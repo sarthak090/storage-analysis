@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-06 (revised 2026-11-16)
 **Author:** Sarthak (with Claude Code)
-**Status:** Approved 2026-11-16 — Phases 1–2 done
+**Status:** Approved 2026-11-16 — Phases 1–4 done
 **Location:** `~/Desktop/experiments/storage-analysis/`
 
 ---
@@ -223,9 +223,14 @@ exists, the safe tool-level alternative, e.g. `docker system prune`).
 3. ✅ **Classifier + model** — categories, purposes, and cleanup commands
    (Appendix A) in `TargetCatalog`; §5.2 invariants enforced by
    `CatalogValidator` and checked in `CoreChecks`. (Pulled forward into phase 2.)
-4. **Popover UI** — grouped ranked list, free-space header, copy/reveal buttons.
-5. **Largest-files section** + Rescan + empty/error states.
-6. **Polish** — menu-bar label (§5.5), formatting, footer safety note.
+4. ✅ **Popover UI** — grouped ranked list with per-category totals,
+   free-space header, copy/reveal buttons. Also pulled forward: the real
+   menu-bar label (§5.5), a working Rescan with progress, "Nothing found" for
+   empty categories, and a ⚠︎ marker on rows whose size may be low because
+   part of the tree was unreadable. One scan runs at launch; after that only
+   Rescan triggers one. (Done 2026-11-16.)
+5. **Largest-files section** + remaining error states.
+6. **Polish** — formatting, footer safety note review, app icon/glyph.
 
 Tests (in `Sources/CoreChecks`, run with `swift run CoreChecks`): unit-test the `du`/`df` output parsing, each `Measure` case against a
 temp-directory fixture (including glob, pattern, and exclusion), and the
