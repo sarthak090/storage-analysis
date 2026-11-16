@@ -54,7 +54,7 @@ final class ScanModel {
         rows(in: category).reduce(0) { $0 + $1.bytes }
     }
 
-    var menuBarLabel: String {
-        diskSpace.map(Format.menuBarLabel) ?? "Storage…"
+    var menuBarLabel: (text: String, symbol: String) {
+        diskSpace.map(Format.menuBarLabel) ?? ("…", "internaldrive")
     }
 }

@@ -15,10 +15,14 @@ public enum Format {
         return "\(max(0, bytes)) B"
     }
 
-    /// Menu-bar label: free space, with ⚠︎ when the disk is at least 90% used.
-    public static func menuBarLabel(_ space: DiskSpace) -> String {
-        let free = compact(space.availableBytes)
-        return space.fractionUsed >= 0.9 ? "⚠︎ \(free)" : free
+    /// At or above this share used, the menu bar shows a warning symbol.
+    public static let warningFraction = 0.9
+
+    /// Menu-bar label: free space plus an SF Symbol name — a warning triangle
+    /// when the disk is at least 90% used, a drive otherwise.
+    public static func menuBarLabel(_ space: DiskSpace) -> (text: String, symbol: String) {
+        let warning = space.fractionUsed >= warningFraction
+        return (compact(space.availableBytes), warning ? "exclamationmark.triangle.fill" : "internaldrive")
     }
 
     /// "9.3 GB free of 245 GB · 96% used"

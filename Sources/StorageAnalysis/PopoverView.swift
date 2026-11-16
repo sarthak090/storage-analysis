@@ -4,6 +4,7 @@ import StorageAnalysisCore
 
 struct PopoverView: View {
     let model: ScanModel
+    @State private var loginItem = LoginItem()
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
@@ -77,6 +78,18 @@ struct PopoverView: View {
                 }
                 Spacer()
                 Button("Quit") { NSApplication.shared.terminate(nil) }
+            }
+            Toggle("Open at login", isOn: Binding(
+                get: { loginItem.isEnabled },
+                set: { loginItem.set($0) }
+            ))
+            .toggleStyle(.checkbox)
+            .font(.caption)
+            if let error = loginItem.error {
+                Text("Couldn't change login item: \(error)")
+                    .font(.caption2)
+                    .foregroundStyle(.red)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             Text("This app never deletes files — commands are copied for you to review and run.")
                 .font(.caption2)

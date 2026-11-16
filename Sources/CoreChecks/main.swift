@@ -185,8 +185,11 @@ checkEqual(Format.compact(999), "999 B", "compact bytes")
 checkEqual(Format.compact(-5), "0 B", "compact clamps negatives")
 let nearlyFull = DiskSpace(totalBytes: 100_000_000_000, usedBytes: 80_000_000_000, availableBytes: 5_000_000_000)
 let roomy = DiskSpace(totalBytes: 100_000_000_000, usedBytes: 50_000_000_000, availableBytes: 50_000_000_000)
-checkEqual(Format.menuBarLabel(nearlyFull), "⚠︎ 5.0 GB", "label warns at >= 90% used")
-checkEqual(Format.menuBarLabel(roomy), "50.0 GB", "label plain below 90%")
+checkEqual(Format.menuBarLabel(nearlyFull).text, "5.0 GB", "label shows free space")
+checkEqual(Format.menuBarLabel(nearlyFull).symbol, "exclamationmark.triangle.fill", "label warns at >= 90% used")
+checkEqual(Format.menuBarLabel(roomy).symbol, "internaldrive", "label plain below 90%")
+let exactlyNinety = DiskSpace(totalBytes: 100, usedBytes: 90, availableBytes: 10)
+checkEqual(Format.menuBarLabel(exactlyNinety).symbol, "exclamationmark.triangle.fill", "label warns at exactly 90%")
 checkEqual(Format.spaceSummary(nearlyFull), "5.0 GB free of 100 GB · 95% used", "space summary")
 
 // MARK: - Reveal path

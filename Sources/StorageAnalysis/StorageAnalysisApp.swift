@@ -15,11 +15,16 @@ struct StorageAnalysisApp: App {
         MenuBarExtra {
             PopoverView(model: model)
         } label: {
-            Text(model.menuBarLabel)
-                // The label exists from launch, so this runs one scan at startup.
-                // Further scans only happen when you press Rescan.
-                .task { await model.scan() }
-                .help(model.diskSpace.map(Format.spaceSummary) ?? "Storage Analysis")
+            let label = model.menuBarLabel
+            HStack(spacing: 3) {
+                Image(systemName: label.symbol)
+                Text(label.text)
+            }
+            // The label exists from launch, so this runs one scan at startup.
+            // Further scans only happen when you press Rescan.
+            .task { await model.scan() }
+            .help(model.diskSpace.map(Format.spaceSummary) ?? "Storage Analysis")
+            .accessibilityLabel(model.diskSpace.map(Format.spaceSummary) ?? "Storage Analysis")
         }
         .menuBarExtraStyle(.window)
     }

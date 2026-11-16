@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-06 (revised 2026-11-16)
 **Author:** Sarthak (with Claude Code)
-**Status:** Approved 2026-11-16 — Phases 1–5 done
+**Status:** v1 complete 2026-11-16 — all six phases done
 **Location:** `~/Desktop/experiments/storage-analysis/`
 
 ---
@@ -189,8 +189,9 @@ exists, the safe tool-level alternative, e.g. `docker system prune`).
 
 ### 5.5 UI behavior
 - **Menu-bar label shows free space, not percent used** — free GB is the number
-  that matters when deciding whether to clean. Format: `7.7 GB` normally, with a
-  `⚠︎` prefix when the data volume is ≥ 90% used (e.g. `⚠︎ 7.7 GB`). The
+  that matters when deciding whether to clean. Format: a drive symbol and
+  `7.7 GB` normally; a warning-triangle symbol instead when the data volume is
+  ≥ 90% used. The
   label's tooltip and the popover header show the full line:
   "7.7 GB free of 228 GB · 97% used".
 - Click → popover: free-space header bar (`ProgressView` filled to % used), then
@@ -236,7 +237,11 @@ exists, the safe tool-level alternative, e.g. `docker system prune`).
    the targets' folders (no whole-disk crawl), each labelled with the row
    that counts it; runs alongside the folder scan (≈4 s total). Error
    states: unreadable items are counted and shown. (Done 2026-11-16.)
-6. **Polish** — formatting, footer safety note review, app icon/glyph.
+6. ✅ **Polish** — menu-bar label is an SF Symbol plus free space
+   (`internaldrive`, or `exclamationmark.triangle.fill` at ≥ 90% used), with
+   the full "free of · % used" line as tooltip and VoiceOver label; opt-in
+   "Open at login" (SMAppService, off by default). No custom app icon: as a
+   menu-bar-only app it would only show in Finder. (Done 2026-11-16.)
 
 Tests (in `Sources/CoreChecks`, run with `swift run CoreChecks`): unit-test the `du`/`df` output parsing, each `Measure` case against a
 temp-directory fixture (including glob, pattern, and exclusion), and the
