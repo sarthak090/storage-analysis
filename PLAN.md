@@ -2,7 +2,7 @@
 
 **Date:** 2026-11-06 (revised 2026-11-16)
 **Author:** Sarthak (with Claude Code)
-**Status:** Approved 2026-11-16 — Phase 1 done
+**Status:** Approved 2026-11-16 — Phases 1–2 done
 **Location:** `~/Desktop/experiments/storage-analysis/`
 
 ---
@@ -136,14 +136,18 @@ struct Target {           // static, curated
     let measure: Measure  // paths are ~-expanded at scan time
     let purpose: String   // plain-English "what it is"
     let category: SafetyCategory
-    let cleanupCommand: String?   // nil for risky items
+    let cleanup: Cleanup?         // nil for risky items
 }
+
+// The app's code also has: `Cleanup` (.shell = names its paths, validated;
+// .tool = e.g. `npm cache clean`), a `note` per target, and `MeasuredSize`
+// (not `Measurement`, which clashes with Foundation).
 
 struct ScanResult {       // produced per scan
     let target: Target
     let bytes: Int64      // clamped to ≥ 0 for .excluding
     let exists: Bool      // false when nothing matched
-    let error: String?    // e.g. permission denied on part of the tree
+    let errors: [String] // e.g. permission denied on part of the tree
 }
 ```
 
@@ -212,11 +216,13 @@ exists, the safe tool-level alternative, e.g. `docker system prune`).
 
 1. ✅ **Scaffold** — SwiftUI `MenuBarExtra` app, non-sandboxed, runs and
    shows a static popover. (Done 2026-11-16.)
-2. **Scanner core** — `Process` wrapper, `du`/`df` parsing, and all five
+2. ✅ **Scanner core** — `Process` wrapper, `du`/`df` parsing, and all five
    `Measure` cases; background scan of the hardcoded `Target` list →
-   `[ScanResult]`. Verify numbers match the CLI.
-3. **Classifier + model** — wire categories, purposes, and cleanup commands
-   (Appendix A); add the invariant tests from §5.2.
+   `[ScanResult]`. Verified: matches `du -sk` to the kilobyte; full scan ≈4 s.
+   (Done 2026-11-16.)
+3. ✅ **Classifier + model** — categories, purposes, and cleanup commands
+   (Appendix A) in `TargetCatalog`; §5.2 invariants enforced by
+   `CatalogValidator` and checked in `CoreChecks`. (Pulled forward into phase 2.)
 4. **Popover UI** — grouped ranked list, free-space header, copy/reveal buttons.
 5. **Largest-files section** + Rescan + empty/error states.
 6. **Polish** — menu-bar label (§5.5), formatting, footer safety note.
@@ -231,6 +237,8 @@ temp-directory fixture (including glob, pattern, and exclusion), and the
 - `./scripts/bundle.sh` → `build/StorageAnalysis.app` (ad-hoc signed, no
   entitlements = not sandboxed, `LSUIElement` = no Dock icon). Then
   `open build/StorageAnalysis.app`.
+- `swift run storage-scan` prints a real scan (add `--kb` for exact
+  kilobytes, to compare with `du -sk`).
 - `swift run CoreChecks` runs the unit checks and exits non-zero on failure.
   Not `swift test`: with only the Command Line Tools, XCTest is missing and
   `swift test` silently runs zero swift-testing tests. If Xcode is installed
@@ -260,7 +268,10 @@ because these caches come back; the app hides them while empty.
 | Puppeteer browsers | `.directory(~/.cache/puppeteer)` | 1.4 GB | — | Puppeteer browser downloads | `rm -rf ~/.cache/puppeteer` |
 | Headless browsers | `.sum([~/Library/Caches/ms-playwright, ~/Library/Caches/node-chromium])` | ~1.1 GB | — | Headless browser binaries | `rm -rf ~/Library/Caches/ms-playwright ~/Library/Caches/node-chromium` |
 | App-update leftovers | `.glob(~/Library/Caches/*.ShipIt)` | ~3.5 GB | 8.8 MB | Completed app-update staging leftovers | `rm -rf ~/Library/Caches/*.ShipIt` |
-| Misc build caches | `.sum([…/dotslash, …/puccinialin, …/pnpm, …/go-build])` under `~/Library/Caches` | ~2.0 GB | 774 MB | Misc build/tool caches | `rm -rf ~/Library/Caches/{dotslash,puccinialin,pnpm,go-build}` |
+| Misc build caches | `.sum([…/dotslash, …/puccinialin, …/pnpm, …/go-build])` under `~/Library/Caches` | ~2.0 GB | 774 MB | Misc build/tool caches | `rm -rf ~/Library/Caches/dotslash ~/Library/Caches/puccinialin ~/Library/Caches/pnpm ~/Library/Caches/go-build` |
+
+Note: the misc-caches command spells out each path instead of using
+`{a,b}` brace expansion, so the validator can check it word by word.
 
 Note: the aerials target now measures `aerials/videos` (what the command
 deletes), not the whole `aerials` folder, so the row and the command match.

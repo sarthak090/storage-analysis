@@ -20,5 +20,10 @@ let package = Package(
             name: "CoreChecks",
             dependencies: ["StorageAnalysisCore"]
         ),
+        // Debug tool: prints a real scan. `swift run storage-scan`
+        .executableTarget(
+            name: "storage-scan",
+            dependencies: ["StorageAnalysisCore"]
+        ),
     ]
 )
